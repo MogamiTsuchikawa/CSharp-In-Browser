@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test NPM Package</title>
+</head>
+<body>
+    <h1>Test CSharp Browser Compiler NPM Package</h1>
+    <div id="output"></div>
+    <button id="test-btn">Test Compiler</button>
+
+    <!-- Load from dist (simulating npm package) -->
+    <script src="dist/csharp-browser-compiler.umd.js"></script>
+    
+    <script>
+        document.getElementById('test-btn').addEventListener('click', async () => {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Testing...';
+            
+            try {
+                // Initialize compiler with explicit runtime path
+                const compiler = new CSharpBrowserCompiler({
+                    runtimePath: './runtime/',
+                    onReady: () => console.log('Compiler ready!'),
+                    onError: (error) => console.error('Error:', error)
+                });
+
+                // Test basic C# code
+                const result = await compiler.run(`
+                    using System;
+                    using System.Linq;
+                    
+                    public class Program {
+                        public static void Main() {
+                            Console.WriteLine("Hello from NPM package!");
+                            
+                            var numbers = Enumerable.Range(1, 5);
+                            var sum = numbers.Sum();
+                            Console.WriteLine($"Sum of 1-5: {sum}");
+                            
+                            Console.WriteLine("Testing Console.ReadLine:");
+                            string input = Console.ReadLine();
+                            Console.WriteLine($"You entered: {input}");
+                        }
+                    }
+                `);
+                
+                if (result.success) {
+                    output.innerHTML = `
+                        <h3>✅ Success!</h3>
+                        <pre>${result.output.join('\\n')}</pre>
+                    `;
+                } else {
+                    output.innerHTML = `
+                        <h3>❌ Compilation Failed</h3>
+                        <pre>${result.compileLog.join('\\n')}</pre>
+                    `;
+                }
+            } catch (error) {
+                output.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+        
+        // Set some test input
+        setTimeout(() => {
+            if (window.CSharpBrowserCompiler) {
+                // This will be used when the test runs
+                window.testInputLines = ['Hello from ReadLine!'];
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a web-based C# compiler that runs entirely in the browser using the Mono WebAssembly runtime. It allows users to write, compile, and execute C# code without any server-side infrastructure.
 
+**Original Project**: Based on [CSharp-In-Browser](https://github.com/nbarkhina/CSharp-In-Browser) by Neil Barkhina
+**Library Extensions**: Enhanced by MogamiTsuchikawa with JavaScript/TypeScript library support, NPM packaging, and cross-platform builds.
+
 ## Architecture
 
 The project consists of two main components:

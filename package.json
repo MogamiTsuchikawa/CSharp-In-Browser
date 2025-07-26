@@ -2,19 +2,28 @@
   "name": "csharp-browser-compiler",
   "version": "1.0.0",
   "description": "Compile and run C# code directly in the browser using Mono WebAssembly",
-  "main": "lib/csharp-browser-compiler.js",
-  "types": "lib/csharp-browser-compiler.d.ts",
+  "main": "dist/csharp-browser-compiler.js",
+  "types": "dist/csharp-browser-compiler.d.ts",
+  "module": "dist/csharp-browser-compiler.esm.js",
+  "browser": "dist/csharp-browser-compiler.umd.js",
   "files": [
-    "lib/",
-    "publish/",
+    "dist/",
+    "runtime/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CLAUDE.md"
   ],
   "scripts": {
-    "build": "./build.sh",
-    "build:windows": "powershell -ExecutionPolicy Bypass -File build.ps1",
-    "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "./build.sh && npm run package",
+    "build:windows": "powershell -ExecutionPolicy Bypass -File build.ps1 && npm run package",
+    "package": "npm run copy-runtime && npm run build-dist",
+    "copy-runtime": "mkdir -p runtime && cp -r publish/managed runtime/ && cp publish/dotnet.js runtime/ && cp publish/dotnet.wasm runtime/ && cp publish/mono-config.js runtime/",
+    "build-dist": "mkdir -p dist && cp lib/csharp-browser-compiler.js dist/ && cp lib/csharp-browser-compiler.d.ts dist/ && npm run build-esm && npm run build-umd",
+    "build-esm": "node scripts/build-esm.js",
+    "build-umd": "node scripts/build-umd.js",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "cd examples && python3 -m http.server 8080"
   },
   "keywords": [
     "csharp",
@@ -25,9 +34,21 @@
     "wasm",
     "mono",
     "roslyn",
-    "dotnet"
+    "dotnet",
+    "typescript"
   ],
-  "author": "",
+  "author": {
+    "name": "MogamiTsuchikawa",
+    "email": "",
+    "url": "https://github.com/MogamiTsuchikawa"
+  },
+  "contributors": [
+    {
+      "name": "Neil Barkhina",
+      "url": "https://github.com/nbarkhina",
+      "role": "Original Author"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -39,5 +60,9 @@
   "homepage": "https://github.com/nbarkhina/CSharp-In-Browser#readme",
   "engines": {
     "node": ">=12.0.0"
-  }
+  },
+  "devDependencies": {},
+  "peerDependencies": {},
+  "jsdelivr": "dist/csharp-browser-compiler.umd.js",
+  "unpkg": "dist/csharp-browser-compiler.umd.js"
 }

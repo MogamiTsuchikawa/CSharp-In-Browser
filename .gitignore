@@ -103,6 +103,8 @@ coverage/
 
 # NPM package output
 *.tgz
+dist/
+runtime/
 
 # Backup files
 *.bak
