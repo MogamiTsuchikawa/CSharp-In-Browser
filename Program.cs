@@ -38,12 +38,16 @@ namespace WasmRoslyn
                 assemblies.Add(assembliesText[i].ToString());
             }
 
-            Task.Run(() => service.SetReferences(assemblies));
+            Task.Run(async () => {
+                await service.SetReferences(assemblies);
+                // アセンブリ読み込み完了を通知
+                App.Invoke("onAssembliesLoaded", new object[] { true });
+            });
         }
 
-        public static void Run(JSObject app, string code)
+        public static void Run(JSObject app, string code, JSObject inputLines)
         {
-            Task.Run(() => CompileAndRun(app, code));
+            Task.Run(() => CompileAndRun(app, code, inputLines));
         }
 
         public static void CompileOnly(JSObject app, string code)
@@ -81,14 +85,38 @@ namespace WasmRoslyn
         }
 
 
-        public static async Task CompileAndRun(JSObject app, string code)
+        public static async Task CompileAndRun(JSObject app, string code, JSObject inputLines)
         {
 
             try
             {
                 service.CompileLog = new List<string>();
-                var result = await service.CompileAndRun(code);
-                app.Invoke("setRunLog", new object[] { string.Join("\r\n",result) });
+                
+                // JSObjectから入力行のリストを取得
+                List<string> inputs = new List<string>();
+                if (inputLines != null)
+                {
+                    var inputArray = inputLines as WebAssembly.Core.Array;
+                    if (inputArray != null)
+                    {
+                        for (int i = 0; i < inputArray.Length; i++)
+                        {
+                            inputs.Add(inputArray[i]?.ToString() ?? string.Empty);
+                        }
+                    }
+                }
+                
+                var result = await service.CompileAndRun(code, inputs);
+                
+                // 結果を配列としてJavaScriptに返す
+                if (result != null)
+                {
+                    app.Invoke("setRunLogArray", new object[] { result.ToArray() });
+                }
+                else
+                {
+                    app.Invoke("setRunLogArray", new object[] { new string[] { "Compilation failed" } });
+                }
 
             }
             catch (Exception e)
@@ -106,6 +134,14 @@ namespace WasmRoslyn
         static HttpClient httpClient;
         static string BaseApiUrl = string.Empty;
         static string PathName = string.Empty;
+        static string CustomBasePath = string.Empty;
+        
+        public static void SetBasePath(string basePath)
+        {
+            CustomBasePath = basePath;
+            httpClient = null; // Reset to force recreation
+        }
+        
         static void CheckHttpClient()
         {
             if (httpClient == null)
@@ -115,7 +151,23 @@ namespace WasmRoslyn
                 using (var location = (JSObject)window.GetObjectProperty("location"))
                 {
                     BaseApiUrl = (string)location.GetObjectProperty("origin");
-                    PathName = (string)location.GetObjectProperty("pathname");
+                    if (!string.IsNullOrEmpty(CustomBasePath))
+                    {
+                        PathName = CustomBasePath;
+                    }
+                    else
+                    {
+                        PathName = (string)location.GetObjectProperty("pathname");
+                        // Remove file name if present (e.g., "/examples/basic-usage.html" -> "/examples/")
+                        if (PathName.EndsWith(".html"))
+                        {
+                            var lastSlash = PathName.LastIndexOf('/');
+                            if (lastSlash >= 0)
+                            {
+                                PathName = PathName.Substring(0, lastSlash + 1);
+                            }
+                        }
+                    }
                     Console.WriteLine($"Base: {BaseApiUrl} ReferencePath: {PathName}");
                 }
                 httpClient = new HttpClient() { BaseAddress = new Uri(new Uri(BaseApiUrl), PathName) };

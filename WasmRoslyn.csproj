@@ -4,7 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="WebAssembly">
-      <HintPath>C:\DevNeil\Mono-Wasm-SDK-Latest\framework\WebAssembly.Bindings.dll</HintPath>
+      <HintPath Condition="Exists('Mono-Wasm-SDK/Mono-Wasm-SDK-Latest/framework/WebAssembly.Bindings.dll')">Mono-Wasm-SDK/Mono-Wasm-SDK-Latest/framework/WebAssembly.Bindings.dll</HintPath>
+      <HintPath Condition="!Exists('Mono-Wasm-SDK/Mono-Wasm-SDK-Latest/framework/WebAssembly.Bindings.dll')">C:\DevNeil\Mono-Wasm-SDK-Latest\framework\WebAssembly.Bindings.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

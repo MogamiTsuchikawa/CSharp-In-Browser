@@ -1,11 +1,23 @@
 # Autosave files
 *~
 
-# build
+# Build output directories
 [Oo]bj/
 [Bb]in/
 packages/
 TestResults/
+publish/
+
+# Mono WASM SDK (extracted)
+Mono-Wasm-SDK/
+
+# C# build files
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.resources
+*.manifest
 
 # globs
 Makefile.in
@@ -43,4 +55,56 @@ Thumbs.db
 mono/*
 mono-wasm.zip
 .stamp-wasm-sdk
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package manager lock files
+package-lock.json
+yarn.lock
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS generated files
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage and test results
+coverage/
+*.lcov
+.nyc_output
+
+# NPM package output
+*.tgz
+
+# Backup files
+*.bak
+*.backup
 

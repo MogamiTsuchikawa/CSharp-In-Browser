@@ -1,14 +1,11 @@
 var starterCode = `using System;
-using System.Threading.Tasks;
 
-namespace WasmRoslyn.Demo
+public class Program
 {
-    public class RunClass
+    public static void Main()
     {
-        public async Task<string> Run()
-        {
-            return "Working";
-        }
+        Console.WriteLine("Hello, World!");
+        Console.WriteLine("This is running in the browser!");
     }
 }`;
 var myEditor;
@@ -25,6 +22,8 @@ class MyApp {
         this.newAssembly = '';
         this.compiling = false;
         this.mobile_device = false;
+        this.inputLines = [];  // Console.ReadLine用の入力行
+        this.outputLines = []; // Console.WriteLine用の出力行
         this.setupSamples();
         rivets.bind(document.getElementsByTagName('body')[0], { data: this });
     }
@@ -74,7 +73,8 @@ class MyApp {
     btnRun() {
         this.compiling = true;
         var code = myEditor.getValue();
-        BINDING.call_static_method("[WasmRoslyn]WasmRoslyn.Program:Run", [this, code]);
+        var inputLines = this.inputLines || [];
+        BINDING.call_static_method("[WasmRoslyn]WasmRoslyn.Program:Run", [this, code, inputLines]);
     }
 
     btnCompile() {
@@ -107,6 +107,14 @@ class MyApp {
     setRunLog(log){
         console.log('run log', log);
         this.outputLog.innerHTML = log;
+    }
+
+    setRunLogArray(logArray){
+        console.log('run log array', logArray);
+        // 配列を改行で結合して表示
+        this.outputLog.innerHTML = logArray.join('<br>');
+        // 必要に応じて配列として保持
+        this.outputLines = logArray;
     }
 
     btnProcess() {
@@ -180,7 +188,16 @@ class MyApp {
     }
 
     btnLoadCodeSample(){
-        myEditor.setValue(this[$('#ddlLoadSample')[0].value]);
+        var sampleValue = $('#ddlLoadSample')[0].value;
+        myEditor.setValue(this[sampleValue]);
+        
+        // Console I/Oサンプルの場合、デフォルトの入力値を設定
+        if (sampleValue === 'sampleConsoleIO') {
+            this.inputLines = ['Alice', '25'];
+            alert('Sample input lines set: ["Alice", "25"]\nYou can modify App.inputLines in browser console before running.');
+        } else {
+            this.inputLines = [];
+        }
     }
 
     setupSamples(){
@@ -191,6 +208,7 @@ class MyApp {
             {value:'sampleDataTable',name:'DataTable'},
             {value:'sampleNewtonsoft',name:'Newtonsoft.Json'},
             {value:'sampleHttpClient',name:'HttpClient'},
+            {value:'sampleConsoleIO',name:'Console I/O Example'},
         ];
 
         this.sampleNewtonsoft = 
@@ -376,6 +394,30 @@ namespace WasmRoslyn.Demo
             }
 
             return "Working: " + length;
+        }
+    }
+}`;
+
+        this.sampleConsoleIO = 
+`using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine("What is your name?");
+        string name = Console.ReadLine();
+        
+        Console.WriteLine("How old are you?");
+        string ageStr = Console.ReadLine();
+        
+        if (int.TryParse(ageStr, out int age))
+        {
+            Console.WriteLine($"Hello, {name}! You are {age} years old.");
+        }
+        else
+        {
+            Console.WriteLine($"Hello, {name}! Invalid age entered.");
         }
     }
 }`;

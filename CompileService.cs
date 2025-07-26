@@ -14,6 +14,61 @@ using WebAssembly;
 
 namespace WasmRoslyn
 {
+    public class CustomConsoleWriter : TextWriter
+    {
+        private List<string> _outputLines = new List<string>();
+
+        public override Encoding Encoding => Encoding.UTF8;
+
+        public List<string> GetOutputLines()
+        {
+            return _outputLines;
+        }
+
+        public override void WriteLine(string value)
+        {
+            _outputLines.Add(value ?? string.Empty);
+        }
+
+        public override void WriteLine()
+        {
+            _outputLines.Add(string.Empty);
+        }
+
+        public override void Write(string value)
+        {
+            if (_outputLines.Count == 0)
+            {
+                _outputLines.Add(value ?? string.Empty);
+            }
+            else
+            {
+                _outputLines[_outputLines.Count - 1] += value ?? string.Empty;
+            }
+        }
+    }
+
+    public class CustomConsoleReader : TextReader
+    {
+        private List<string> _inputLines = new List<string>();
+        private int _inputIndex = 0;
+
+        public void SetInputLines(List<string> lines)
+        {
+            _inputLines = lines ?? new List<string>();
+            _inputIndex = 0;
+        }
+
+        public override string ReadLine()
+        {
+            if (_inputIndex < _inputLines.Count)
+            {
+                return _inputLines[_inputIndex++];
+            }
+            return null;
+        }
+    }
+
     public class CompileService
     {
         private readonly HttpClient _http;
@@ -145,18 +200,83 @@ namespace WasmRoslyn
         }
 
 
-        public async Task<string> CompileAndRun(string code)
+        public async Task<List<string>> CompileAndRun(string code, List<string> inputLines = null)
         {
             await Init();
 
             var assemby = await this.Compile(code);
             if (assemby != null)
             {
-                var type = assemby.GetExportedTypes().FirstOrDefault();
-                Console.WriteLine("Type: " + type.ToString());
-                var methodInfo = type.GetMethod("Run");
-                var instance = Activator.CreateInstance(type);
-                return await (Task<string>)methodInfo.Invoke(instance, null);
+                // カスタムコンソール実装を設定
+                var customWriter = new CustomConsoleWriter();
+                var customReader = new CustomConsoleReader();
+                customReader.SetInputLines(inputLines ?? new List<string>());
+                
+                var originalOut = Console.Out;
+                var originalIn = Console.In;
+                
+                Console.SetOut(customWriter);
+                Console.SetIn(customReader);
+
+                try
+                {
+                    // Programクラスを探す
+                    var programType = assemby.GetType("Program") ?? assemby.GetExportedTypes().FirstOrDefault(t => t.Name == "Program");
+                    
+                    if (programType != null)
+                    {
+                        // static Mainメソッドを探す
+                        var mainMethod = programType.GetMethod("Main", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                        
+                        if (mainMethod != null)
+                        {
+                            Console.WriteLine("Executing static Main method");
+                            
+                            // Mainメソッドのパラメータを確認
+                            var parameters = mainMethod.GetParameters();
+                            if (parameters.Length == 0)
+                            {
+                                mainMethod.Invoke(null, null);
+                            }
+                            else if (parameters.Length == 1 && parameters[0].ParameterType == typeof(string[]))
+                            {
+                                mainMethod.Invoke(null, new object[] { new string[0] });
+                            }
+                            
+                            // コンソール出力を返す
+                            return customWriter.GetOutputLines();
+                        }
+                    }
+                    
+                    // 互換性のため、従来のRun()メソッドも試す
+                    var type = assemby.GetExportedTypes().FirstOrDefault();
+                    if (type != null)
+                    {
+                        var methodInfo = type.GetMethod("Run");
+                        if (methodInfo != null)
+                        {
+                            Console.WriteLine("Type: " + type.ToString());
+                            var instance = Activator.CreateInstance(type);
+                            var result = await (Task<string>)methodInfo.Invoke(instance, null);
+                            
+                            // Run()メソッドの結果とコンソール出力を組み合わせる
+                            var output = customWriter.GetOutputLines();
+                            if (!string.IsNullOrEmpty(result))
+                            {
+                                output.Add(result);
+                            }
+                            return output;
+                        }
+                    }
+                    
+                    return new List<string> { "No Main or Run method found" };
+                }
+                finally
+                {
+                    // 標準のコンソールに戻す
+                    Console.SetOut(originalOut);
+                    Console.SetIn(originalIn);
+                }
             }
 
             return null;

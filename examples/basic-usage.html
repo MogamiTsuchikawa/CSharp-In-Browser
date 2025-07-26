@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSharp Browser Compiler - Basic Example</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        #output {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 200px;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.ready { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .status.loading { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>CSharp Browser Compiler - Basic Example</h1>
+    
+    <div id="status" class="status loading">Loading compiler...</div>
+    
+    <div class="container">
+        <div>
+            <h2>C# Code</h2>
+            <textarea id="code">using System;
+using System.Linq;
+
+public class Program 
+{
+    public static void Main() 
+    {
+        Console.WriteLine("Hello from C# in the browser!");
+        Console.WriteLine($"Current time: {DateTime.Now}");
+        
+        // Demonstrate LINQ
+        var numbers = new[] { 1, 2, 3, 4, 5 };
+        var squares = numbers.Select(n => n * n);
+        Console.WriteLine($"Squares: {string.Join(", ", squares)}");
+        
+        // Demonstrate Console input
+        Console.WriteLine("\nWhat's your name?");
+        string name = Console.ReadLine();
+        Console.WriteLine($"Hello, {name}!");
+    }
+}</textarea>
+        </div>
+        
+        <div>
+            <h2>Output</h2>
+            <div id="output"></div>
+        </div>
+    </div>
+    
+    <div>
+        <button id="runBtn" disabled>Run Code</button>
+        <button id="compileBtn" disabled>Compile Only</button>
+        <button id="clearBtn">Clear Output</button>
+    </div>
+    
+    <div>
+        <h3>Console Input</h3>
+        <input type="text" id="inputLine" placeholder="Enter input line">
+        <button id="addInputBtn">Add Input Line</button>
+        <button id="clearInputBtn">Clear Input</button>
+        <div id="inputLines"></div>
+    </div>
+
+    <!-- Include the compiler library -->
+    <script src="../publish/lib/csharp-browser-compiler.js"></script>
+    
+    <script>
+        // Initialize the compiler
+        const compiler = new CSharpBrowserCompiler({
+            monoConfig: '../publish/mono-config.js',
+            runtimeJs: '../publish/runtime.js',
+            dotnetJs: '../publish/dotnet.js',
+            dotnetWasm: '../publish/dotnet.wasm',
+            assembliesPath: '../publish/managed/',
+            basePath: '../publish/', // Set the base path for asset loading
+            onReady: () => {
+                document.getElementById('status').className = 'status ready';
+                document.getElementById('status').textContent = 'Compiler ready!';
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('compileBtn').disabled = false;
+            },
+            onError: (error) => {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Input management
+        const inputLines = ['User']; // Default input
+        updateInputDisplay();
+
+        document.getElementById('addInputBtn').addEventListener('click', () => {
+            const input = document.getElementById('inputLine').value;
+            if (input) {
+                inputLines.push(input);
+                document.getElementById('inputLine').value = '';
+                updateInputDisplay();
+            }
+        });
+
+        document.getElementById('clearInputBtn').addEventListener('click', () => {
+            inputLines.length = 0;
+            updateInputDisplay();
+        });
+
+        function updateInputDisplay() {
+            document.getElementById('inputLines').innerHTML = 
+                '<strong>Current input lines:</strong><br>' +
+                inputLines.map((line, i) => `${i}: ${line}`).join('<br>');
+        }
+
+        // Run button handler
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            const code = document.getElementById('code').value;
+            const output = document.getElementById('output');
+            
+            output.textContent = 'Compiling and running...\n';
+            
+            try {
+                // Set input lines
+                compiler.setInputLines(inputLines);
+                
+                // Run the code
+                const result = await compiler.run(code);
+                
+                if (result.success) {
+                    output.textContent = 'Output:\n' + result.output.join('\n');
+                } else {
+                    output.textContent = 'Compilation failed:\n' + result.compileLog.join('\n');
+                }
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Compile button handler
+        document.getElementById('compileBtn').addEventListener('click', async () => {
+            const code = document.getElementById('code').value;
+            const output = document.getElementById('output');
+            
+            output.textContent = 'Compiling...\n';
+            
+            try {
+                const result = await compiler.compile(code);
+                
+                if (result.success) {
+                    output.textContent = 'Compilation successful!\n' + result.compileLog.join('\n');
+                } else {
+                    output.textContent = 'Compilation failed:\n' + result.compileLog.join('\n');
+                }
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Clear button handler
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('output').textContent = '';
+        });
+    </script>
+</body>
+</html>
