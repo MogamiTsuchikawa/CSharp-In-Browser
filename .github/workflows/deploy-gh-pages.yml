@@ -32,11 +32,31 @@ jobs:
       run: |
         mkdir -p docs/examples
         mkdir -p docs/publish
+        mkdir -p docs/publish/lib
+        mkdir -p docs/publish/managed
         
-    - name: Copy examples and runtime files
+    - name: Copy examples
       run: |
         cp -r examples/* docs/examples/
-        cp -r publish/* docs/publish/
+        
+    - name: Copy runtime files
+      run: |
+        # Copy runtime files
+        cp -r runtime/* docs/publish/
+        
+        # Copy library files
+        cp -r lib/csharp-browser-compiler.js docs/publish/lib/
+        cp -r lib/csharp-browser-compiler.d.ts docs/publish/lib/
+        
+        # Copy the main index.html if exists
+        if [ -f index.html ]; then
+          cp index.html docs/publish/
+        fi
+        
+        # Copy script.js if exists
+        if [ -f script.js ]; then
+          cp script.js docs/publish/
+        fi
         
     - name: Create index page
       run: |
