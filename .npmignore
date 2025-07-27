@@ -1,0 +1,37 @@
+# Source files
+*.cs
+*.csproj
+*.sln
+build.ps1
+build.sh
+
+# Development files
+.github/
+examples/
+test-*.html
+scripts/
+
+# Build artifacts not needed for NPM
+publish/
+Mono-Wasm-SDK/
+Mono-Wasm-SDK-Latest.zip
+bin/
+obj/
+managed/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.suo
+*.user
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Documentation source files (keep compiled docs)
+*.md
+!README.md
+!CLAUDE.md

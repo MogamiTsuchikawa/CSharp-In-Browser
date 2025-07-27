@@ -1,0 +1,84 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        registry-url: 'https://registry.npmjs.org'
+        
+    - name: Install Mono
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mono-complete
+        
+    - name: Extract Mono WASM SDK
+      run: |
+        unzip -q Mono-Wasm-SDK-Latest.zip
+        
+    - name: Build project
+      run: |
+        chmod +x build.sh
+        ./build.sh
+        
+    - name: Update build scripts for new package name
+      run: |
+        # Update build-esm.js
+        sed -i "s/csharp-browser-compiler/csharp-wasm-runner/g" scripts/build-esm.js
+        # Update build-umd.js
+        sed -i "s/csharp-browser-compiler/csharp-wasm-runner/g" scripts/build-umd.js
+        sed -i "s/CSharpBrowserCompiler/CSharpWasmRunner/g" scripts/build-umd.js
+        
+    - name: Package for NPM
+      run: |
+        npm run package
+        
+    - name: Update version if manual trigger
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        
+    - name: Update version from release tag
+      if: github.event_name == 'release'
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        npm version $VERSION --no-git-tag-version
+        
+    - name: Publish to NPM
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+    - name: Create GitHub Release Assets
+      if: github.event_name == 'release'
+      run: |
+        # Create tarball for release
+        npm pack
+        
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./csharp-wasm-runner-*.tgz
+        asset_name: csharp-wasm-runner-${{ github.event.release.tag_name }}.tgz
+        asset_content_type: application/gzip
