@@ -38,17 +38,24 @@ jobs:
         chmod +x build.sh
         ./build.sh
         
-    - name: Update build scripts for new package name
+    - name: Package for NPM
       run: |
-        # Update build-esm.js
+        # First copy runtime files
+        npm run copy-runtime
+        
+        # Then copy and rename library files
+        mkdir -p dist
+        cp lib/csharp-browser-compiler.js dist/csharp-wasm-runner.js
+        cp lib/csharp-browser-compiler.d.ts dist/csharp-wasm-runner.d.ts
+        
+        # Update build scripts for new package name
         sed -i "s/csharp-browser-compiler/csharp-wasm-runner/g" scripts/build-esm.js
-        # Update build-umd.js
         sed -i "s/csharp-browser-compiler/csharp-wasm-runner/g" scripts/build-umd.js
         sed -i "s/CSharpBrowserCompiler/CSharpWasmRunner/g" scripts/build-umd.js
         
-    - name: Package for NPM
-      run: |
-        npm run package
+        # Build ESM and UMD versions
+        npm run build-esm
+        npm run build-umd
         
     - name: Update version if manual trigger
       if: github.event_name == 'workflow_dispatch'
