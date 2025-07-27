@@ -6,4 +6,27 @@ $MONO_TOOL = "C:\Program Files (x86)\Mono\bin\mono.exe"
 
 Start-Sleep -Seconds 1.5
 
+# Create a basic index.html for the build if it doesn't exist
+if (-not (Test-Path "index.html")) {
+    @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>C# WASM Runner</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>C# WASM Runner</h1>
+    <p>This is a minimal index.html for build purposes.</p>
+    <p>For examples, see: <a href="../examples/basic-usage.html">examples/basic-usage.html</a></p>
+</body>
+</html>
+"@ | Out-File -FilePath "index.html" -Encoding UTF8
+}
+
+# Create a basic script.js for the build if it doesn't exist
+if (-not (Test-Path "script.js")) {
+    "// Basic script.js for build purposes" | Out-File -FilePath "script.js" -Encoding UTF8
+}
+
 & $MONO_TOOL $WASM_SDK/packager.exe  --copy=ifnewer --out=publish --search-path=./managed/ --asset=index.html --asset=script.js  ./bin/WasmRoslyn.dll

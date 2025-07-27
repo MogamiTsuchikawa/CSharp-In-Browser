@@ -47,6 +47,30 @@ sleep 1.5
 
 # Package the application
 echo "Packaging application..."
+
+# Create a basic index.html for the build if it doesn't exist
+if [ ! -f "index.html" ]; then
+    cat > index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>C# WASM Runner</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>C# WASM Runner</h1>
+    <p>This is a minimal index.html for build purposes.</p>
+    <p>For examples, see: <a href="../examples/basic-usage.html">examples/basic-usage.html</a></p>
+</body>
+</html>
+EOF
+fi
+
+# Create a basic script.js for the build if it doesn't exist
+if [ ! -f "script.js" ]; then
+    echo "// Basic script.js for build purposes" > script.js
+fi
+
 $MONO_TOOL $WASM_SDK/packager.exe --copy=ifnewer --out=publish --search-path=./managed/ --asset=index.html --asset=script.js ./bin/WasmRoslyn.dll
 
 if [ $? -ne 0 ]; then
