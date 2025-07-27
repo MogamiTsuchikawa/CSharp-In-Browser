@@ -17,7 +17,7 @@
     "build": "./build.sh && npm run package",
     "build:windows": "powershell -ExecutionPolicy Bypass -File build.ps1 && npm run package",
     "package": "npm run copy-runtime && npm run build-dist",
-    "copy-runtime": "mkdir -p runtime && cp -r publish/managed runtime/ && cp publish/dotnet.js runtime/ && cp publish/dotnet.wasm runtime/ && cp publish/mono-config.js runtime/",
+    "copy-runtime": "mkdir -p runtime && cp -r publish/managed runtime/ && cp publish/dotnet.js runtime/ && cp publish/dotnet.wasm runtime/ && cp publish/mono-config.js runtime/ && cp publish/runtime.js runtime/",
     "build-dist": "mkdir -p dist && cp lib/csharp-browser-compiler.js dist/csharp-wasm-runner.js && cp lib/csharp-browser-compiler.d.ts dist/csharp-wasm-runner.d.ts && npm run build-esm && npm run build-umd",
     "build-esm": "node scripts/build-esm.js",
     "build-umd": "node scripts/build-umd.js",

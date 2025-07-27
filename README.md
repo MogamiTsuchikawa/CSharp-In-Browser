@@ -39,13 +39,13 @@ npm install csharp-wasm-runner
 
 ```javascript
 // ES6 modules
-import CSharpWasmRunner from 'csharp-wasm-runner';
+import CSharpBrowserCompiler from 'csharp-wasm-runner';
 
 // CommonJS
-const CSharpWasmRunner = require('csharp-wasm-runner');
+const CSharpBrowserCompiler = require('csharp-wasm-runner');
 
 // Initialize compiler
-const compiler = new CSharpWasmRunner();
+const compiler = new CSharpBrowserCompiler();
 
 // Compile and run C# code
 const result = await compiler.run(`
@@ -63,9 +63,9 @@ console.log(result.output); // ["Hello from C# in the browser!"]
 ### TypeScript Usage
 
 ```typescript
-import CSharpWasmRunner, { CompileResult } from 'csharp-wasm-runner';
+import CSharpBrowserCompiler, { CompileResult } from 'csharp-wasm-runner';
 
-const compiler = new CSharpWasmRunner();
+const compiler = new CSharpBrowserCompiler();
 
 const result: CompileResult = await compiler.run(`
     using System;
@@ -132,17 +132,23 @@ const result = await compiler.run(`
 ### Configuration Options
 
 ```javascript
-const compiler = new CSharpWasmRunner({
-    // Custom runtime path (useful for different deployment scenarios)
+const compiler = new CSharpBrowserCompiler({
+    // Runtime paths (auto-detected for NPM packages)
     runtimePath: '/assets/csharp-runtime/',
+    monoConfig: '/path/to/mono-config.js',
+    dotnetJs: '/path/to/dotnet.js',
+    dotnetWasm: '/path/to/dotnet.wasm',
+    assembliesPath: '/path/to/managed/',
+    
+    // Base path for asset loading
+    basePath: '/custom/path/',
+    
+    // Auto-initialization (default: true)
+    autoInit: true,
     
     // Callbacks
     onReady: () => console.log('Compiler ready!'),
-    onError: (error) => console.error('Compiler error:', error),
-    
-    // Advanced options
-    useLibraryRuntime: true, // Use built-in runtime (default: true)
-    basePath: '/custom/path/' // Custom base path for asset loading
+    onError: (error) => console.error('Compiler error:', error)
 });
 ```
 
@@ -152,13 +158,14 @@ const compiler = new CSharpWasmRunner({
 
 ```typescript
 interface CompilerOptions {
-    runtimePath?: string;        // Path to runtime files
+    runtimePath?: string;        // Path to runtime files (auto-detected for NPM)
     monoConfig?: string;         // Path to mono-config.js
+    runtimeJs?: string;          // Path to runtime.js
     dotnetJs?: string;           // Path to dotnet.js
     dotnetWasm?: string;         // Path to dotnet.wasm
     assembliesPath?: string;     // Path to managed assemblies
-    basePath?: string;           // Custom base path
-    useLibraryRuntime?: boolean; // Use library runtime (default: true)
+    basePath?: string;           // Base path for asset loading
+    autoInit?: boolean;          // Auto-initialize on construction (default: true)
     onReady?: () => void;        // Ready callback
     onError?: (error: Error) => void; // Error handler
 }
@@ -269,15 +276,15 @@ See the [examples](./examples/) directory for complete usage examples:
 ### NPM Package Integration
 ```javascript
 // Node.js/Webpack project
-import CSharpWasmRunner from 'csharp-wasm-runner';
+import CSharpBrowserCompiler from 'csharp-wasm-runner';
 
-// Initialize with default settings
-const compiler = new CSharpWasmRunner();
+// Initialize with default settings (uses package runtime)
+const compiler = new CSharpBrowserCompiler();
 
 // Or with custom configuration
-const compiler = new CSharpWasmRunner({
-    // Use CDN for runtime files (recommended for production)
-    basePath: 'https://unpkg.com/csharp-wasm-runner/runtime/',
+const compiler = new CSharpBrowserCompiler({
+    // For production, you can use CDN
+    runtimePath: 'https://unpkg.com/csharp-wasm-runner/runtime/',
     onReady: () => console.log('Ready to compile C#!'),
     onError: (err) => console.error('Compiler error:', err)
 });
@@ -304,6 +311,188 @@ const result = await compiler.run(`
 
 console.log(result.output);
 ```
+
+## Framework Integration
+
+### Next.js / React
+
+For optimal performance in Next.js applications, place runtime files in the `public` directory:
+
+```bash
+# After installing the package
+npm install csharp-wasm-runner
+
+# Copy runtime files to public directory
+cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime
+```
+
+**Next.js usage example:**
+
+```typescript
+// pages/csharp-compiler.tsx or app/csharp-compiler/page.tsx
+'use client'; // Required for app directory
+
+import { useEffect, useState } from 'react';
+import CSharpBrowserCompiler from 'csharp-wasm-runner';
+
+export default function CSharpCompiler() {
+  const [compiler, setCompiler] = useState<CSharpBrowserCompiler | null>(null);
+  const [output, setOutput] = useState<string>('');
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const initCompiler = async () => {
+      const comp = new CSharpBrowserCompiler({
+        // Use public directory for runtime files
+        runtimePath: '/csharp-runtime/',
+        onReady: () => setIsReady(true),
+        onError: (error) => console.error('Compiler error:', error)
+      });
+      setCompiler(comp);
+    };
+
+    initCompiler();
+  }, []);
+
+  const runCode = async () => {
+    if (!compiler || !isReady) return;
+    
+    const result = await compiler.run(`
+      using System;
+      public class Program {
+        public static void Main() {
+          Console.WriteLine("Hello from Next.js + C#!");
+        }
+      }
+    `);
+    
+    setOutput(result.output.join('\n'));
+  };
+
+  return (
+    <div>
+      <button onClick={runCode} disabled={!isReady}>
+        {isReady ? 'Run C# Code' : 'Loading...'}
+      </button>
+      <pre>{output}</pre>
+    </div>
+  );
+}
+```
+
+### Vite / Vue / React (SPA)
+
+For Vite-based applications, copy runtime files to the `public` directory:
+
+```bash
+# Copy runtime files
+cp -r node_modules/csharp-wasm-runner/runtime public/
+
+# In your component
+const compiler = new CSharpBrowserCompiler({
+  runtimePath: '/runtime/',
+  // ... other options
+});
+```
+
+### Webpack Configuration
+
+For custom Webpack setups, ensure WebAssembly files are served correctly:
+
+```javascript
+// webpack.config.js
+module.exports = {
+  // ... other config
+  experiments: {
+    asyncWebAssembly: true,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.wasm$/,
+        type: 'webassembly/async',
+      },
+    ],
+  },
+};
+```
+
+### CDN Deployment
+
+For production deployments, consider using a CDN for runtime files:
+
+```javascript
+const compiler = new CSharpBrowserCompiler({
+  runtimePath: 'https://cdn.jsdelivr.net/npm/csharp-wasm-runner@1.0.0/runtime/',
+  // or
+  runtimePath: 'https://unpkg.com/csharp-wasm-runner@1.0.0/runtime/',
+});
+```
+
+### Automated Setup
+
+Add a post-install script to your project's `package.json` for automatic runtime copying:
+
+```json
+{
+  "scripts": {
+    "postinstall": "cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime",
+    "setup-csharp": "cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime"
+  }
+}
+```
+
+Or create a setup script:
+
+```bash
+#!/bin/bash
+# setup-csharp.sh
+echo "Setting up C# WASM Runner..."
+mkdir -p public/csharp-runtime
+cp -r node_modules/csharp-wasm-runner/runtime/* public/csharp-runtime/
+echo "Runtime files copied to public/csharp-runtime/"
+```
+
+## Performance Considerations
+
+### Runtime File Size (25MB total)
+- **Initial Load**: Runtime files are ~25MB uncompressed
+- **Caching**: Enable browser caching for `.wasm` and `.dll` files
+- **Compression**: Use gzip/brotli compression on your server
+- **Lazy Loading**: Initialize compiler only when needed
+
+### Recommended Deployment Strategy
+
+1. **Copy runtime to public directory**:
+   ```bash
+   cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime
+   ```
+
+2. **Configure server headers** (nginx example):
+   ```nginx
+   location /csharp-runtime/ {
+     expires 1y;
+     add_header Cache-Control "public, immutable";
+     gzip on;
+     gzip_types application/wasm application/octet-stream;
+   }
+   ```
+
+3. **Use service worker for caching** (optional):
+   ```javascript
+   // Cache runtime files for offline use
+   const CACHE_NAME = 'csharp-runtime-v1';
+   const RUNTIME_FILES = [
+     '/csharp-runtime/dotnet.wasm',
+     '/csharp-runtime/dotnet.js',
+     // ... other files
+   ];
+   ```
+
+### Memory Usage
+- **WebAssembly Heap**: ~50-100MB during compilation
+- **Browser Limit**: Consider memory constraints on mobile devices
+- **Cleanup**: Call `compiler.dispose()` when done (if available)
 
 ## Limitations
 
@@ -385,13 +574,13 @@ npm install csharp-wasm-runner
 
 ```javascript
 // ES6モジュール
-import CSharpWasmRunner from 'csharp-wasm-runner';
+import CSharpBrowserCompiler from 'csharp-wasm-runner';
 
 // CommonJS
-const CSharpWasmRunner = require('csharp-wasm-runner');
+const CSharpBrowserCompiler = require('csharp-wasm-runner');
 
 // コンパイラを初期化
-const compiler = new CSharpWasmRunner();
+const compiler = new CSharpBrowserCompiler();
 
 // C#コードをコンパイル・実行
 const result = await compiler.run(`
@@ -406,12 +595,97 @@ const result = await compiler.run(`
 console.log(result.output); // ["ブラウザからのC#コード実行！"]
 ```
 
+## フレームワーク統合
+
+### Next.js / React
+
+Next.jsアプリケーションでの最適なパフォーマンスのため、ランタイムファイルを`public`ディレクトリに配置してください：
+
+```bash
+# パッケージインストール後
+npm install csharp-wasm-runner
+
+# ランタイムファイルをpublicディレクトリにコピー
+cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime
+```
+
+**Next.js使用例:**
+
+```typescript
+// pages/csharp-compiler.tsx または app/csharp-compiler/page.tsx
+'use client'; // app ディレクトリでは必須
+
+import { useEffect, useState } from 'react';
+import CSharpBrowserCompiler from 'csharp-wasm-runner';
+
+export default function CSharpCompiler() {
+  const [compiler, setCompiler] = useState<CSharpBrowserCompiler | null>(null);
+  const [output, setOutput] = useState<string>('');
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const initCompiler = async () => {
+      const comp = new CSharpBrowserCompiler({
+        // publicディレクトリのランタイムファイルを使用
+        runtimePath: '/csharp-runtime/',
+        onReady: () => setIsReady(true),
+        onError: (error) => console.error('コンパイラエラー:', error)
+      });
+      setCompiler(comp);
+    };
+
+    initCompiler();
+  }, []);
+
+  const runCode = async () => {
+    if (!compiler || !isReady) return;
+    
+    const result = await compiler.run(`
+      using System;
+      public class Program {
+        public static void Main() {
+          Console.WriteLine("Next.js + C#からこんにちは！");
+        }
+      }
+    `);
+    
+    setOutput(result.output.join('\n'));
+  };
+
+  return (
+    <div>
+      <button onClick={runCode} disabled={!isReady}>
+        {isReady ? 'C#コード実行' : '読み込み中...'}
+      </button>
+      <pre>{output}</pre>
+    </div>
+  );
+}
+```
+
+### 推奨デプロイメント戦略
+
+1. **ランタイムをpublicディレクトリにコピー**:
+   ```bash
+   cp -r node_modules/csharp-wasm-runner/runtime public/csharp-runtime
+   ```
+
+2. **サーバーヘッダーの設定** (nginx例):
+   ```nginx
+   location /csharp-runtime/ {
+     expires 1y;
+     add_header Cache-Control "public, immutable";
+     gzip on;
+     gzip_types application/wasm application/octet-stream;
+   }
+   ```
+
 ### TypeScript使用例
 
 ```typescript
-import CSharpWasmRunner, { CompileResult } from 'csharp-wasm-runner';
+import CSharpBrowserCompiler, { CompileResult } from 'csharp-wasm-runner';
 
-const compiler = new CSharpWasmRunner();
+const compiler = new CSharpBrowserCompiler();
 
 const result: CompileResult = await compiler.run(`
     using System;
@@ -478,7 +752,7 @@ const result = await compiler.run(`
 ### 設定オプション
 
 ```javascript
-const compiler = new CSharpWasmRunner({
+const compiler = new CSharpBrowserCompiler({
     // カスタムランタイムパス（異なるデプロイシナリオに有用）
     runtimePath: '/assets/csharp-runtime/',
     
