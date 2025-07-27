@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UMD Test - C# WASM Runner</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>UMD Build Test</h1>
+    <p>This page tests if the UMD build correctly exposes the CSharpBrowserCompiler class globally.</p>
+    
+    <div id="test-results"></div>
+    
+    <h2>Test Code</h2>
+    <pre><code>// Test if CSharpBrowserCompiler is available globally
+console.log('window.CSharpBrowserCompiler:', window.CSharpBrowserCompiler);
+
+// Test instantiation
+const compiler = new window.CSharpBrowserCompiler({
+    autoInit: false, // Don't auto-initialize for testing
+    onReady: () => console.log('Compiler ready!'),
+    onError: (error) => console.error('Compiler error:', error)
+});
+
+console.log('Compiler instance:', compiler);</code></pre>
+
+    <!-- Include the UMD build -->
+    <script src="../dist/csharp-browser-compiler.umd.js"></script>
+    
+    <script>
+        const resultsDiv = document.getElementById('test-results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test 1: Check if CSharpBrowserCompiler is available globally
+        if (typeof window.CSharpBrowserCompiler === 'function') {
+            addResult('✓ CSharpBrowserCompiler is available globally', 'success');
+            console.log('window.CSharpBrowserCompiler:', window.CSharpBrowserCompiler);
+        } else {
+            addResult('✗ CSharpBrowserCompiler is NOT available globally', 'error');
+            addResult(`Available: ${Object.keys(window).filter(k => k.includes('CSharp')).join(', ')}`, 'info');
+        }
+        
+        // Test 2: Check constructor
+        try {
+            const compiler = new window.CSharpBrowserCompiler({
+                autoInit: false, // Don't auto-initialize for testing
+                onReady: () => console.log('Compiler ready!'),
+                onError: (error) => console.error('Compiler error:', error)
+            });
+            
+            addResult('✓ CSharpBrowserCompiler constructor works', 'success');
+            console.log('Compiler instance:', compiler);
+            
+            // Test 3: Check methods
+            const expectedMethods = ['init', 'run', 'compile', 'addAssemblies', 'setInputLines'];
+            const availableMethods = expectedMethods.filter(method => typeof compiler[method] === 'function');
+            
+            if (availableMethods.length === expectedMethods.length) {
+                addResult(`✓ All expected methods available: ${availableMethods.join(', ')}`, 'success');
+            } else {
+                const missing = expectedMethods.filter(method => !availableMethods.includes(method));
+                addResult(`✗ Missing methods: ${missing.join(', ')}`, 'error');
+                addResult(`Available methods: ${availableMethods.join(', ')}`, 'info');
+            }
+            
+        } catch (error) {
+            addResult(`✗ Constructor failed: ${error.message}`, 'error');
+            console.error('Constructor error:', error);
+        }
+        
+        // Test 4: Check if global export is correct
+        const globalKeys = Object.keys(window).filter(k => k.includes('CSharp') || k.includes('Wasm'));
+        addResult(`Global variables containing 'CSharp' or 'Wasm': ${globalKeys.join(', ') || 'none'}`, 'info');
+    </script>
+</body>
+</html>

@@ -29,10 +29,10 @@ npm install csharp-wasm-runner
 
 ```html
 <!-- Via unpkg -->
-<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
+<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-browser-compiler.umd.js"></script>
 
 <!-- Via jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-browser-compiler.umd.js"></script>
 ```
 
 ### Basic Usage
@@ -423,9 +423,9 @@ For production deployments, consider using a CDN for runtime files:
 
 ```javascript
 const compiler = new CSharpBrowserCompiler({
-  runtimePath: 'https://cdn.jsdelivr.net/npm/csharp-wasm-runner@1.0.0/runtime/',
+  runtimePath: 'https://cdn.jsdelivr.net/npm/csharp-wasm-runner@1.0.1/runtime/',
   // or
-  runtimePath: 'https://unpkg.com/csharp-wasm-runner@1.0.0/runtime/',
+  runtimePath: 'https://unpkg.com/csharp-wasm-runner@1.0.1/runtime/',
 });
 ```
 
@@ -564,10 +564,10 @@ npm install csharp-wasm-runner
 
 ```html
 <!-- unpkg経由 -->
-<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
+<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-browser-compiler.umd.js"></script>
 
 <!-- jsDelivr経由 -->
-<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-browser-compiler.umd.js"></script>
 ```
 
 ### 基本的な使用方法

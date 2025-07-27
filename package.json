@@ -1,11 +1,11 @@
 {
   "name": "csharp-wasm-runner",
-  "version": "1.0.0",
+  "version": "0.0.4",
   "description": "Compile and run C# code directly in the browser using Mono WebAssembly",
-  "main": "dist/csharp-wasm-runner.js",
-  "types": "dist/csharp-wasm-runner.d.ts",
-  "module": "dist/csharp-wasm-runner.esm.js",
-  "browser": "dist/csharp-wasm-runner.umd.js",
+  "main": "dist/csharp-browser-compiler.js",
+  "types": "dist/csharp-browser-compiler.d.ts",
+  "module": "dist/csharp-browser-compiler.esm.js",
+  "browser": "dist/csharp-browser-compiler.umd.js",
   "files": [
     "dist/",
     "runtime/",
@@ -18,7 +18,7 @@
     "build:windows": "powershell -ExecutionPolicy Bypass -File build.ps1 && npm run package",
     "package": "npm run copy-runtime && npm run build-dist",
     "copy-runtime": "mkdir -p runtime && cp -r publish/managed runtime/ && cp publish/dotnet.js runtime/ && cp publish/dotnet.wasm runtime/ && cp publish/mono-config.js runtime/ && cp publish/runtime.js runtime/",
-    "build-dist": "mkdir -p dist && cp lib/csharp-browser-compiler.js dist/csharp-wasm-runner.js && cp lib/csharp-browser-compiler.d.ts dist/csharp-wasm-runner.d.ts && npm run build-esm && npm run build-umd",
+    "build-dist": "mkdir -p dist && cp lib/csharp-browser-compiler.js dist/ && cp lib/csharp-browser-compiler.d.ts dist/ && npm run build-esm && npm run build-umd",
     "build-esm": "node scripts/build-esm.js",
     "build-umd": "node scripts/build-umd.js",
     "prepublishOnly": "npm run build",
@@ -63,6 +63,6 @@
   },
   "devDependencies": {},
   "peerDependencies": {},
-  "jsdelivr": "dist/csharp-wasm-runner.umd.js",
-  "unpkg": "dist/csharp-wasm-runner.umd.js"
+  "jsdelivr": "dist/csharp-browser-compiler.umd.js",
+  "unpkg": "dist/csharp-browser-compiler.umd.js"
 }

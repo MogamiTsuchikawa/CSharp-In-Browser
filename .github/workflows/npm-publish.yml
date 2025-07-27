@@ -40,27 +40,8 @@ jobs:
         
     - name: Package for NPM
       run: |
-        # First copy runtime files
-        npm run copy-runtime
-        
-        # Then copy and rename library files
-        mkdir -p dist
-        cp lib/csharp-browser-compiler.js dist/csharp-wasm-runner.js
-        cp lib/csharp-browser-compiler.d.ts dist/csharp-wasm-runner.d.ts
-        
-        # Update build scripts to read from dist/ instead of lib/
-        sed -i "s|../lib/csharp-browser-compiler.js|../dist/csharp-wasm-runner.js|g" scripts/build-esm.js
-        sed -i "s|../dist/csharp-browser-compiler.esm.js|../dist/csharp-wasm-runner.esm.js|g" scripts/build-esm.js
-        sed -i "s|csharp-browser-compiler.esm.js|csharp-wasm-runner.esm.js|g" scripts/build-esm.js
-        
-        sed -i "s|../lib/csharp-browser-compiler.js|../dist/csharp-wasm-runner.js|g" scripts/build-umd.js
-        sed -i "s|../dist/csharp-browser-compiler.umd.js|../dist/csharp-wasm-runner.umd.js|g" scripts/build-umd.js
-        sed -i "s|csharp-browser-compiler.umd.js|csharp-wasm-runner.umd.js|g" scripts/build-umd.js
-        sed -i "s/CSharpBrowserCompiler/CSharpWasmRunner/g" scripts/build-umd.js
-        
-        # Build ESM and UMD versions
-        npm run build-esm
-        npm run build-umd
+        # Build the package with correct naming
+        npm run package
         
     - name: Update version if manual trigger
       if: github.event_name == 'workflow_dispatch'
