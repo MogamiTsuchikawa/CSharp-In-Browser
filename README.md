@@ -1,6 +1,7 @@
-# CSharp Browser Compiler
+# C# WASM Runner
 
-[![npm version](https://badge.fury.io/js/csharp-browser-compiler.svg)](https://badge.fury.io/js/csharp-browser-compiler)
+[![npm version](https://badge.fury.io/js/csharp-wasm-runner.svg)](https://badge.fury.io/js/csharp-wasm-runner)
+[![GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://MogamiTsuchikawa.github.io/CSharp-In-Browser/)
 
 A JavaScript/TypeScript library that allows you to compile and run C# code directly in the browser using Mono WebAssembly. No server required!
 
@@ -21,30 +22,30 @@ A JavaScript/TypeScript library that allows you to compile and run C# code direc
 ### NPM Installation
 
 ```bash
-npm install csharp-browser-compiler
+npm install csharp-wasm-runner
 ```
 
 ### CDN Usage
 
 ```html
 <!-- Via unpkg -->
-<script src="https://unpkg.com/csharp-browser-compiler/dist/csharp-browser-compiler.umd.js"></script>
+<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
 
 <!-- Via jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/csharp-browser-compiler/dist/csharp-browser-compiler.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
 ```
 
 ### Basic Usage
 
 ```javascript
 // ES6 modules
-import CSharpBrowserCompiler from 'csharp-browser-compiler';
+import CSharpWasmRunner from 'csharp-wasm-runner';
 
 // CommonJS
-const CSharpBrowserCompiler = require('csharp-browser-compiler');
+const CSharpWasmRunner = require('csharp-wasm-runner');
 
 // Initialize compiler
-const compiler = new CSharpBrowserCompiler();
+const compiler = new CSharpWasmRunner();
 
 // Compile and run C# code
 const result = await compiler.run(`
@@ -62,9 +63,9 @@ console.log(result.output); // ["Hello from C# in the browser!"]
 ### TypeScript Usage
 
 ```typescript
-import CSharpBrowserCompiler, { CompileResult } from 'csharp-browser-compiler';
+import CSharpWasmRunner, { CompileResult } from 'csharp-wasm-runner';
 
-const compiler = new CSharpBrowserCompiler();
+const compiler = new CSharpWasmRunner();
 
 const result: CompileResult = await compiler.run(`
     using System;
@@ -131,7 +132,7 @@ const result = await compiler.run(`
 ### Configuration Options
 
 ```javascript
-const compiler = new CSharpBrowserCompiler({
+const compiler = new CSharpWasmRunner({
     // Custom runtime path (useful for different deployment scenarios)
     runtimePath: '/assets/csharp-runtime/',
     
@@ -196,7 +197,7 @@ Set input lines for Console.ReadLine().
 
 ```bash
 # Clone the repository
-git clone https://github.com/nbarkhina/CSharp-In-Browser.git
+git clone https://github.com/MogamiTsuchikawa/CSharp-In-Browser.git
 cd CSharp-In-Browser
 
 # Install dependencies (if any)
@@ -207,6 +208,31 @@ npm run build
 
 # Test locally
 npm run example
+```
+
+### GitHub Pages Deployment
+
+This project automatically deploys examples to GitHub Pages via GitHub Actions:
+
+- **Live Demo**: [https://MogamiTsuchikawa.github.io/CSharp-In-Browser/](https://MogamiTsuchikawa.github.io/CSharp-In-Browser/)
+- **Deployment**: Triggered on pushes to `master` branch
+- **Examples**: Interactive C# compiler with Monaco editor
+
+### NPM Publishing
+
+The package is automatically published to NPM when a new release is created:
+
+```bash
+# Create a new release (triggers NPM publish)
+git tag v1.0.1
+git push origin v1.0.1
+
+# Or use GitHub's release interface
+# The workflow will automatically:
+# 1. Build the project with Mono
+# 2. Package for NPM with correct naming
+# 3. Publish to NPM registry
+# 4. Attach release assets
 ```
 
 ### Linux Build
@@ -231,10 +257,53 @@ sudo apt-get install mono-complete
 
 ## Examples
 
+### Online Demo
+Try the interactive examples on GitHub Pages: [https://MogamiTsuchikawa.github.io/CSharp-In-Browser/](https://MogamiTsuchikawa.github.io/CSharp-In-Browser/)
+
+### Local Examples
 See the [examples](./examples/) directory for complete usage examples:
 
 - [Basic Usage](./examples/basic-usage.html) - HTML example with UI
 - [TypeScript Example](./examples/typescript-example.ts) - Advanced TypeScript usage
+
+### NPM Package Integration
+```javascript
+// Node.js/Webpack project
+import CSharpWasmRunner from 'csharp-wasm-runner';
+
+// Initialize with default settings
+const compiler = new CSharpWasmRunner();
+
+// Or with custom configuration
+const compiler = new CSharpWasmRunner({
+    // Use CDN for runtime files (recommended for production)
+    basePath: 'https://unpkg.com/csharp-wasm-runner/runtime/',
+    onReady: () => console.log('Ready to compile C#!'),
+    onError: (err) => console.error('Compiler error:', err)
+});
+
+// Compile and run
+const result = await compiler.run(`
+    using System;
+    using System.Linq;
+    
+    public class Program {
+        public static void Main() {
+            var fibonacci = GenerateFibonacci(10);
+            Console.WriteLine($"Fibonacci: {string.Join(", ", fibonacci)}");
+        }
+        
+        static int[] GenerateFibonacci(int count) {
+            return Enumerable.Range(0, count)
+                .Aggregate(new int[] { 0, 1 }, (acc, _) => 
+                    acc.Concat(new[] { acc[^1] + acc[^2] }).ToArray())
+                .Take(count).ToArray();
+        }
+    }
+`);
+
+console.log(result.output);
+```
 
 ## Limitations
 
@@ -278,7 +347,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 # CSharp Browser Compiler (日本語)
 
-[![npm version](https://badge.fury.io/js/csharp-browser-compiler.svg)](https://badge.fury.io/js/csharp-browser-compiler)
+[![npm version](https://badge.fury.io/js/csharp-wasm-runner.svg)](https://badge.fury.io/js/csharp-wasm-runner)
 
 Mono WebAssemblyを使用してブラウザで直接C#コードをコンパイル・実行できるJavaScript/TypeScriptライブラリです。サーバーは不要です！
 
@@ -299,30 +368,30 @@ Mono WebAssemblyを使用してブラウザで直接C#コードをコンパイ�
 ### NPMインストール
 
 ```bash
-npm install csharp-browser-compiler
+npm install csharp-wasm-runner
 ```
 
 ### CDN利用
 
 ```html
 <!-- unpkg経由 -->
-<script src="https://unpkg.com/csharp-browser-compiler/dist/csharp-browser-compiler.umd.js"></script>
+<script src="https://unpkg.com/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
 
 <!-- jsDelivr経由 -->
-<script src="https://cdn.jsdelivr.net/npm/csharp-browser-compiler/dist/csharp-browser-compiler.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/csharp-wasm-runner/dist/csharp-wasm-runner.umd.js"></script>
 ```
 
 ### 基本的な使用方法
 
 ```javascript
 // ES6モジュール
-import CSharpBrowserCompiler from 'csharp-browser-compiler';
+import CSharpWasmRunner from 'csharp-wasm-runner';
 
 // CommonJS
-const CSharpBrowserCompiler = require('csharp-browser-compiler');
+const CSharpWasmRunner = require('csharp-wasm-runner');
 
 // コンパイラを初期化
-const compiler = new CSharpBrowserCompiler();
+const compiler = new CSharpWasmRunner();
 
 // C#コードをコンパイル・実行
 const result = await compiler.run(`
@@ -340,9 +409,9 @@ console.log(result.output); // ["ブラウザからのC#コード実行！"]
 ### TypeScript使用例
 
 ```typescript
-import CSharpBrowserCompiler, { CompileResult } from 'csharp-browser-compiler';
+import CSharpWasmRunner, { CompileResult } from 'csharp-wasm-runner';
 
-const compiler = new CSharpBrowserCompiler();
+const compiler = new CSharpWasmRunner();
 
 const result: CompileResult = await compiler.run(`
     using System;
@@ -409,7 +478,7 @@ const result = await compiler.run(`
 ### 設定オプション
 
 ```javascript
-const compiler = new CSharpBrowserCompiler({
+const compiler = new CSharpWasmRunner({
     // カスタムランタイムパス（異なるデプロイシナリオに有用）
     runtimePath: '/assets/csharp-runtime/',
     
