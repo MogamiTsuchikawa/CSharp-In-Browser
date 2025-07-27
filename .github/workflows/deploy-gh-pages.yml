@@ -1,0 +1,140 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Create docs directory structure
+      run: |
+        mkdir -p docs/examples
+        mkdir -p docs/publish
+        
+    - name: Copy examples and runtime files
+      run: |
+        cp -r examples/* docs/examples/
+        cp -r publish/* docs/publish/
+        
+    - name: Create index page
+      run: |
+        cat > docs/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>C# Browser Compiler Examples</title>
+            <meta charset="UTF-8">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    line-height: 1.6;
+                }
+                h1 {
+                    color: #333;
+                }
+                .example-list {
+                    list-style: none;
+                    padding: 0;
+                }
+                .example-list li {
+                    margin: 10px 0;
+                    padding: 15px;
+                    background: #f4f4f4;
+                    border-radius: 5px;
+                }
+                .example-list a {
+                    font-size: 1.2em;
+                    text-decoration: none;
+                    color: #0066cc;
+                }
+                .example-list a:hover {
+                    text-decoration: underline;
+                }
+                .description {
+                    color: #666;
+                    margin-top: 5px;
+                }
+                .github-link {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: #333;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                }
+                .github-link:hover {
+                    background: #555;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>C# Browser Compiler Examples</h1>
+            
+            <p>Welcome to the C# Browser Compiler examples page. This library allows you to compile and run C# code directly in the browser using WebAssembly.</p>
+            
+            <h2>Examples</h2>
+            <ul class="example-list">
+                <li>
+                    <a href="examples/basic-usage.html">Basic Usage Example</a>
+                    <div class="description">
+                        A simple example showing how to compile and run C# code in the browser, including console I/O and LINQ operations.
+                    </div>
+                </li>
+            </ul>
+            
+            <h2>Features</h2>
+            <ul>
+                <li>Compile and run C# code entirely in the browser</li>
+                <li>No server-side infrastructure required</li>
+                <li>Support for console input/output</li>
+                <li>Full .NET Standard 2.0 compatibility</li>
+                <li>Roslyn-based compilation</li>
+                <li>NPM package available for easy integration</li>
+            </ul>
+            
+            <h2>Getting Started</h2>
+            <p>To use the C# Browser Compiler in your own project:</p>
+            <pre><code>npm install csharp-browser-compiler</code></pre>
+            
+            <p>Or include it directly in your HTML:</p>
+            <pre><code>&lt;script src="path/to/csharp-browser-compiler.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <a href="https://github.com/MogamiTsuchikawa/CSharp-In-Browser" class="github-link">View on GitHub</a>
+        </body>
+        </html>
+        EOF
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'docs'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
